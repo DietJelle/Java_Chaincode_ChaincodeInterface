@@ -107,4 +107,9 @@ public class Chaincode extends ChaincodeBase {
         return newSuccessResponse();
     }
 
+    public static void main(String[] args) {
+
+        new Chaincode().start(args);
+    }
+
 }
