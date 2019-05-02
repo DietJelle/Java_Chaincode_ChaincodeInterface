@@ -37,10 +37,10 @@ public class Chaincode extends ChaincodeBase {
             switch (func) {
                 case "set":
                     // Return result as success payload
-                    return ChaincodeBase.newSuccessResponse(set(stub, params));
+                    return set(stub, params);
                 case "get":
                     // Return result as success payload
-                    return ChaincodeBase.newSuccessResponse(get(stub, params));
+                    return get(stub, params);
                 case "delete":
                     // Return result as success payload
                     return delete(stub, params);
@@ -62,7 +62,7 @@ public class Chaincode extends ChaincodeBase {
      * @param args key and value
      * @return value
      */
-    private String get(ChaincodeStub stub, List<String> args) {
+    private Response get(ChaincodeStub stub, List<String> args) {
         if (args.size() != 1) {
             throw new RuntimeException("Incorrect arguments. Expecting a key");
         }
@@ -71,7 +71,7 @@ public class Chaincode extends ChaincodeBase {
         if (value == null || value.isEmpty()) {
             throw new RuntimeException("Asset not found: " + args.get(0));
         }
-        return value;
+        return newSuccessResponse(value);
     }
 
     /**
@@ -82,12 +82,12 @@ public class Chaincode extends ChaincodeBase {
      * @param args key and value
      * @return value
      */
-    private String set(ChaincodeStub stub, List<String> args) {
+    private Response set(ChaincodeStub stub, List<String> args) {
         if (args.size() != 2) {
             throw new RuntimeException("Incorrect arguments. Expecting a key and a value");
         }
         stub.putStringState(args.get(0), args.get(1));
-        return args.get(1);
+        return newSuccessResponse(args.get(1));
     }
 
     /**
