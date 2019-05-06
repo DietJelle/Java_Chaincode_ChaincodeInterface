@@ -39,6 +39,7 @@
                     <target>${java-version}</target>
                 </configuration>
             </plugin>
+            <!-- this created a chaincode.jar that can be installed on a peer -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
