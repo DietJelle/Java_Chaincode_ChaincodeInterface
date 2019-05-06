@@ -64,7 +64,7 @@ public class Chaincode extends ChaincodeBase {
      * get receives the value of a key from the ledger
      *
      * @param stub {@link ChaincodeStub} to operate proposal and ledger
-     * @param args key 
+     * @param args key
      * @return Response with message and payload
      */
     private Response get(ChaincodeStub stub, List<String> args) {
