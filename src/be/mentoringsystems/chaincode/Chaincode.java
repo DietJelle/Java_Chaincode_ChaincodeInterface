@@ -43,7 +43,8 @@ public class Chaincode extends ChaincodeBase {
             switch (func) {
                 case "set":
                     // Return result as success payload
-                    return set(stub, params);
+                    List<byte[]> byteParams = stub.getArgs();
+                    return set(stub, byteParams);
                 case "get":
                     // Return result as success payload
                     return get(stub, params);
@@ -72,11 +73,11 @@ public class Chaincode extends ChaincodeBase {
             throw new RuntimeException("Incorrect arguments. Expecting a key");
         }
 
-        String value = stub.getStringState(args.get(0));
-        if (value == null || value.isEmpty()) {
+        byte[] value = stub.getState(args.get(0));
+        if (value == null) {
             throw new RuntimeException("Asset not found: " + args.get(0));
         }
-        Response response = newSuccessResponse("Returned value for key : " + args.get(0) + " = " + value, value.getBytes(StandardCharsets.UTF_8));
+        Response response = newSuccessResponse("Returned value for key : " + args.get(0) + " = " + value, value);
         return response;
     }
 
@@ -88,12 +89,18 @@ public class Chaincode extends ChaincodeBase {
      * @param args key and value
      * @return value
      */
-    private Response set(ChaincodeStub stub, List<String> args) {
+    private Response set(ChaincodeStub stub, List<byte[]> args) {
         if (args.size() != 2) {
             throw new RuntimeException("Incorrect arguments. Expecting a key and a value");
         }
-        stub.putStringState(args.get(0), args.get(1));
-        return newSuccessResponse("Succesfully set key : " + args.get(0) + " as value : " + args.get(1), args.get(1).getBytes(StandardCharsets.UTF_8));
+        String key = "";
+        try {
+            key = new String(args.get(0), "UTF-8");
+        } catch (Exception ex) {
+
+        }
+        stub.putState(key, args.get(1));
+        return newSuccessResponse("Succesfully set key : " + key + " as value : " + args.get(1), args.get(1));
     }
 
     /**
@@ -110,7 +117,7 @@ public class Chaincode extends ChaincodeBase {
         String key = args.get(0);
         // Delete the key from the state in ledger
         stub.delState(key);
-        return newSuccessResponse("Succesfully deleted key : " + args.get(0) + "from the ledger", args.get(0).getBytes(StandardCharsets.UTF_8));
+        return newSuccessResponse("Succesfully deleted key : " + args.get(0) + "from the ledger", "success".getBytes(StandardCharsets.UTF_8));
     }
 
     public static void main(String[] args) {
