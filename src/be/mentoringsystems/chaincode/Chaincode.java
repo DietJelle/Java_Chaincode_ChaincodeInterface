@@ -7,9 +7,11 @@ package be.mentoringsystems.chaincode;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import org.hyperledger.fabric.shim.ChaincodeBase;
 import org.hyperledger.fabric.shim.ChaincodeStub;
+import org.hyperledger.fabric.shim.ledger.KeyValue;
 
 public class Chaincode extends ChaincodeBase {
 
@@ -50,6 +52,9 @@ public class Chaincode extends ChaincodeBase {
                 case "delete":
                     // Return result as success payload
                     return delete(stub, params);
+                case "query":
+                    // Return result as success payload
+                    return query(stub, params);
                 default:
                     break;
             }
@@ -77,6 +82,36 @@ public class Chaincode extends ChaincodeBase {
             return newErrorResponse("Asset not found with key: " + args.get(0));
         }
         Response response = newSuccessResponse("Returned value for key : " + args.get(0) + " = " + value, value.getBytes(StandardCharsets.UTF_8));
+        return response;
+    }
+
+    private Response query(ChaincodeStub stub, List<String> args) {
+        String payload = "";
+        if (args.size() != 1) {
+            throw new RuntimeException("Incorrect arguments. Expecting a json query");
+        }
+
+        //key value pair result iterator
+        Iterator<KeyValue> iterator = stub.getQueryResult(args.get(0)).iterator();
+
+        if (!iterator.hasNext()) {
+            return newErrorResponse("No results for query: " + args.get(0));
+
+        } else {
+
+            while (iterator.hasNext()) {
+                payload += iterator.next().getStringValue() + ",";
+            }
+            payload = payload.substring(0, payload.length() - 1);
+        }
+
+        //Turn json into array // your string goes here
+        Response response;
+        if (payload != null) {
+            response = newSuccessResponse("Query succesful", payload.getBytes(StandardCharsets.UTF_8));
+        } else {
+            response = newErrorResponse("Something went wrong reading the results");
+        }
         return response;
     }
 
