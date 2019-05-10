@@ -74,7 +74,7 @@ public class Chaincode extends ChaincodeBase {
 
         String value = stub.getStringState(args.get(0));
         if (value == null || value.isEmpty()) {
-            throw new RuntimeException("Asset not found: " + args.get(0));
+            return newErrorResponse("Asset not found with key: " + args.get(0));
         }
         Response response = newSuccessResponse("Returned value for key : " + args.get(0) + " = " + value, value.getBytes(StandardCharsets.UTF_8));
         return response;
