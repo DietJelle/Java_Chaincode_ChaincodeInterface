@@ -85,6 +85,13 @@ public class Chaincode extends ChaincodeBase {
         return response;
     }
 
+    /**
+     * Rich query using json to read from world state
+     *
+     * @param stub {@link ChaincodeStub} to operate proposal and ledger
+     * @param args json query
+     * @return Response with message and payload
+     */
     private Response query(ChaincodeStub stub, List<String> args) {
         String payload = "";
         if (args.size() != 1) {
