@@ -9,9 +9,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import org.hyperledger.fabric.protos.peer.ChaincodeShim.QueryResponseMetadata;
 import org.hyperledger.fabric.shim.ChaincodeBase;
 import org.hyperledger.fabric.shim.ChaincodeStub;
 import org.hyperledger.fabric.shim.ledger.KeyValue;
+import org.hyperledger.fabric.shim.ledger.QueryResultsIteratorWithMetadata;
 
 public class Chaincode extends ChaincodeBase {
 
@@ -55,6 +57,9 @@ public class Chaincode extends ChaincodeBase {
                 case "query":
                     // Return result as success payload
                     return query(stub, params);
+                case "queryWithPagination":
+                    // Return result as success payload
+                    return queryWithPagination(stub, params);
                 default:
                     break;
             }
@@ -116,6 +121,45 @@ public class Chaincode extends ChaincodeBase {
         Response response;
         if (payload != null) {
             response = newSuccessResponse("Query succesful", payload.getBytes(StandardCharsets.UTF_8));
+        } else {
+            response = newErrorResponse("Something went wrong reading the results");
+        }
+        return response;
+    }
+
+    /**
+     * Rich query using json to read from world state, with pagination
+     *
+     * @param stub {@link ChaincodeStub} to operate proposal and ledger
+     * @param args json query
+     * @return Response with message and payload
+     */
+    private Response queryWithPagination(ChaincodeStub stub, List<String> args) {
+        String payload = "";
+        if (args.size() != 3) {
+            throw new RuntimeException("Incorrect arguments. Expecting a json query, page size and bookmark");
+        }
+
+        //key value pair result iterator
+        QueryResultsIteratorWithMetadata<KeyValue> result = stub.getQueryResultWithPagination(args.get(0), Integer.valueOf(args.get(1)), args.get(2));
+        Iterator<KeyValue> iterator = result.iterator();
+        QueryResponseMetadata metadata = result.getMetadata();
+        String bookmark = metadata.getBookmark();
+        if (!iterator.hasNext()) {
+            return newErrorResponse("No results for query: " + args.get(0));
+
+        } else {
+
+            while (iterator.hasNext()) {
+                payload += iterator.next().getStringValue() + ",";
+            }
+            payload = payload.substring(0, payload.length() - 1);
+        }
+
+        //Turn json into array // your string goes here
+        Response response;
+        if (payload != null) {
+            response = newSuccessResponse(bookmark, payload.getBytes(StandardCharsets.UTF_8));
         } else {
             response = newErrorResponse("Something went wrong reading the results");
         }
