@@ -1,4 +1,4 @@
-# Fabric-sdk-java basic CRUD implementation
+# Fabric-java-chaincode example 
 
 Java chaincode that allows basic CRUD operations from a client
 
