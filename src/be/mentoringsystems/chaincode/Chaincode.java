@@ -115,6 +115,7 @@ public class Chaincode extends ChaincodeBase {
                 payload += iterator.next().getStringValue() + ",";
             }
             payload = payload.substring(0, payload.length() - 1);
+            payload = "[" + payload + "]";
         }
 
         //Turn json into array // your string goes here
@@ -154,6 +155,7 @@ public class Chaincode extends ChaincodeBase {
                 payload += iterator.next().getStringValue() + ",";
             }
             payload = payload.substring(0, payload.length() - 1);
+            payload = "[" + payload + "]";
         }
 
         //Turn json into array // your string goes here
