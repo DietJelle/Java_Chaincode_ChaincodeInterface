@@ -4,7 +4,7 @@ Java chaincode that allows basic CRUD operations from a client
 
 ## Getting Started
 
-This chaincode goes along with an [sdk implementation](https://github.com/jelleDiet/Fabric-java-sdk-CRUD-implementation)
+This chaincode goes along with an [sdk implementation](https://github.com/DietJelle/Fabric_SDK_Java_Client)
 
 For local development and testing I recommend using the IBM VScode blockchain plugin to create a network, package and install the chaincode. The plugin can be found [here](https://marketplace.visualstudio.com/items?itemName=IBMBlockchain.ibm-blockchain-platform)
 
