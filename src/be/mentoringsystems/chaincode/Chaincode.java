@@ -96,7 +96,9 @@ public class Chaincode extends ChaincodeBase {
 
         //key value pair result iterator
         Iterator<KeyValue> iterator = stub.getQueryResult(args.get(0)).iterator();
-
+            if(!iterator.hasNext()) {
+                return newSuccessResponse("No results", "[]".getBytes(StandardCharsets.UTF_8));
+            }
             while (iterator.hasNext()) {
                 payload += iterator.next().getStringValue() + ",";
             }
