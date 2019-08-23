@@ -58,7 +58,7 @@
                             <finalName>chaincode</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>be.mentoringsystems.chaincode.Chaincode</mainClass>
+                                    <mainClass>be.blockchaindeveloper.chaincode.Chaincode</mainClass>
                                 </transformer>
                             </transformers>
                             <filters>
