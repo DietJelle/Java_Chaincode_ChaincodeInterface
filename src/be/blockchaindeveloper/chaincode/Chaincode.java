@@ -1,10 +1,19 @@
 package be.blockchaindeveloper.chaincode;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.hyperledger.fabric.shim.ChaincodeBase;
 import org.hyperledger.fabric.shim.ChaincodeStub;
+import org.hyperledger.fabric.shim.ledger.KeyModification;
 import org.hyperledger.fabric.shim.ledger.KeyValue;
 
 public class Chaincode extends ChaincodeBase {
@@ -50,11 +59,14 @@ public class Chaincode extends ChaincodeBase {
                 case "query":
                     // Return result as success payload
                     return query(stub, params);
+                case "getHistory":
+                    // Return result as success payload
+                    return getHistory(stub, params);
                 default:
                     break;
             }
             //Error if unknown method
-            return ChaincodeBase.newErrorResponse("Invalid invoke function name. Expecting one of: [\"set\", \"get\", \"delete\", \"query\"");
+            return ChaincodeBase.newErrorResponse("Invalid invoke function name. Expecting one of: [\"set\", \"get\", \"delete\", \"query\", \"getHistory\"");
         } catch (Throwable e) {
             return ChaincodeBase.newErrorResponse(e.getMessage());
         }
@@ -142,6 +154,43 @@ public class Chaincode extends ChaincodeBase {
     public static void main(String[] args) {
 
         new Chaincode().start(args);
+    }
+
+    /**
+     * getHistory returns all transactions for an object by its key This does
+     * not include read only operations (which don't use a transaction!)
+     *
+     * @param stub {@link ChaincodeStub} to operate proposal and ledger
+     * @param args key
+     * @return Response with message and payload
+     */
+    private Response getHistory(ChaincodeStub stub, List<String> args) {
+        String payload = "";
+        List<Map<String, Object>> historyList = new ArrayList<>();
+
+        //key value pair result iterator
+        Iterator<KeyModification> iterator = stub.getHistoryForKey(args.get(0)).iterator();
+        if (!iterator.hasNext()) {
+            return newSuccessResponse("No results", "[]".getBytes(StandardCharsets.UTF_8));
+        }
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModules(new JavaTimeModule());
+        while (iterator.hasNext()) {
+            HashMap<String, Object> history = new HashMap<>();
+            KeyModification modification = iterator.next();
+            history.put("asset", modification.getStringValue());
+            history.put("transactionId", modification.getTxId());
+            history.put("timeStamp", modification.getTimestamp());
+            historyList.add(history);
+        }
+        try {
+            payload = objectMapper.writeValueAsString(historyList);
+        } catch (JsonProcessingException ex) {
+            Logger.getLogger(Chaincode.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        Response response = newSuccessResponse("Query succesful", payload.getBytes(StandardCharsets.UTF_8));
+        return response;
     }
 
 }
