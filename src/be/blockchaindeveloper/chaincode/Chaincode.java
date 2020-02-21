@@ -11,101 +11,84 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.hyperledger.fabric.shim.ChaincodeBase;
-import org.hyperledger.fabric.shim.ChaincodeStub;
+import org.hyperledger.fabric.contract.Context;
+import org.hyperledger.fabric.contract.ContractInterface;
+import org.hyperledger.fabric.contract.annotation.Contact;
+import org.hyperledger.fabric.contract.annotation.Contract;
+import org.hyperledger.fabric.contract.annotation.Default;
+import org.hyperledger.fabric.contract.annotation.Info;
+import org.hyperledger.fabric.contract.annotation.License;
+import org.hyperledger.fabric.contract.annotation.Transaction;
+import org.hyperledger.fabric.shim.Chaincode.Response;
+import static org.hyperledger.fabric.shim.ResponseUtils.newSuccessResponse;
 import org.hyperledger.fabric.shim.ledger.KeyModification;
 import org.hyperledger.fabric.shim.ledger.KeyValue;
 
-public class Chaincode extends ChaincodeBase {
+@Contract(name = "Chaincode",
+        info = @Info(title = "Simple CRUD Chaincode",
+                description = "Very basic Java Chaincode example",
+                version = "5",
+                license
+                = @License(name = "SPDX-License-Identifier: Apache-2.0",
+                        url = ""),
+                contact = @Contact(email = "dietjelle@gmail.com",
+                        name = "Chaincode",
+                        url = "http://MyAssetContract.me")))
+@Default
+public class Chaincode implements ContractInterface {
+
+    public Chaincode() {
+
+    }
 
     /**
      * Init is called when initializing or updating chaincode. Use this to set
      * initial world state
      *
-     * @param stub {@link ChaincodeStub} to operate proposal and ledger
+     * @param ctx
      * @return Response with message and payload
      */
-    @Override
-    public Response init(ChaincodeStub stub) {
-        String fcn = stub.getFunction();
-        List<String> params = stub.getParameters();
-        //Adding one fish object to the ledger on init
-        stub.putStringState("b0d9b2ec-562c-4917-9cd3-330248e73ace", "{\"docType\":\"fish\",\"id\":\"b0d9b2ec-562c-4917-9cd3-330248e73ace\",\"price\":4,\"type\":\"Salmon\",\"weight\":2}");
-        return newSuccessResponse();
-    }
+    @Transaction
+    public Response init(Context ctx) {
 
-    /**
-     * Invoke is called to read from or write to the ledger
-     *
-     * @param stub {@link ChaincodeStub} to operate proposal and ledger
-     * @return Response
-     */
-    @Override
-    public Response invoke(ChaincodeStub stub) {
-        try {
-            // Extract the function and args from the transaction proposal
-            String func = stub.getFunction();
-            List<String> params = stub.getParameters();
-            switch (func) {
-                case "set":
-                    // Return result as success payload
-                    return set(stub, params);
-                case "get":
-                    // Return result as success payload
-                    return get(stub, params);
-                case "delete":
-                    // Return result as success payload
-                    return delete(stub, params);
-                case "query":
-                    // Return result as success payload
-                    return query(stub, params);
-                case "getHistory":
-                    // Return result as success payload
-                    return getHistory(stub, params);
-                default:
-                    break;
-            }
-            //Error if unknown method
-            return ChaincodeBase.newErrorResponse("Invalid invoke function name. Expecting one of: [\"set\", \"get\", \"delete\", \"query\", \"getHistory\"");
-        } catch (Throwable e) {
-            return ChaincodeBase.newErrorResponse(e.getMessage());
-        }
+        //Adding one fish object to the ledger on init
+        ctx.getStub().putStringState("b0d9b2ec-562c-4917-9cd3-330248e73ace", "{\"docType\":\"fish\",\"id\":\"b0d9b2ec-562c-4917-9cd3-330248e73ace\",\"price\":4,\"type\":\"Salmon\",\"weight\":2}");
+        return newSuccessResponse();
     }
 
     /**
      * get receives the value of a key from the ledger
      *
-     * @param stub {@link ChaincodeStub} to operate proposal and ledger
-     * @param args key
+     * @param ctx
+     * @param key
      * @return Response with message and payload
      */
-    private Response get(ChaincodeStub stub, List<String> args) {
-        if (args.size() != 1) {
-            return newErrorResponse("Incorrect arguments. Expecting a key");
-        }
+    @Transaction
+    public String get(Context ctx, String key) {
 
-        String value = stub.getStringState(args.get(0));
+        String value = ctx.getStub().getStringState(key);
         if (value == null || value.isEmpty()) {
-            return newErrorResponse("Asset not found with key: " + args.get(0));
+            return "Asset not found with key: " + key;
         }
-        Response response = newSuccessResponse("Returned value for key : " + args.get(0) + " = " + value, value.getBytes(StandardCharsets.UTF_8));
-        return response;
+        Response response = newSuccessResponse("Returned value for key : " + key + " = " + value, value.getBytes(StandardCharsets.UTF_8));
+        return response.getStringPayload();
     }
 
     /**
      * Rich query using json to read from world state
      *
-     * @param stub {@link ChaincodeStub} to operate proposal and ledger
-     * @param args json query
+     * @param ctx
+     * @param query
      * @return Response with message and payload
      */
-    private Response query(ChaincodeStub stub, List<String> args) {
+    @Transaction
+    public String query(Context ctx, String query) {
         String payload = "";
 
         //key value pair result iterator
-        Iterator<KeyValue> iterator = stub.getQueryResult(args.get(0)).iterator();
+        Iterator<KeyValue> iterator = ctx.getStub().getQueryResult(query).iterator();
         if (!iterator.hasNext()) {
-            return newSuccessResponse("No results", "[]".getBytes(StandardCharsets.UTF_8));
+            return "[]";
         }
         while (iterator.hasNext()) {
             payload += iterator.next().getStringValue() + ",";
@@ -115,63 +98,57 @@ public class Chaincode extends ChaincodeBase {
 
         Response response = newSuccessResponse("Query succesful", payload.getBytes(StandardCharsets.UTF_8));
 
-        return response;
+        return response.getStringPayload();
     }
 
     /**
      * set stores the asset (both key and value) on the ledger. If the key
      * exists, it will override the value with the new one
      *
-     * @param stub {@link ChaincodeStub} to operate proposal and ledger
-     * @param args key and value
+     * @param ctx
+     * @param key
+     * @param value
      * @return value
      */
-    private Response set(ChaincodeStub stub, List<String> args) {
-        if (args.size() != 2) {
-            return newErrorResponse("Incorrect arguments. Expecting a key and a value");
-        }
-        stub.putStringState(args.get(0), args.get(1));
-        return newSuccessResponse("Succesfully set key : " + args.get(0) + " as value : " + args.get(1), args.get(1).getBytes(StandardCharsets.UTF_8));
+    @Transaction
+    public String set(Context ctx, String key, String value) {
+
+        ctx.getStub().putStringState(key, value);
+        return "Succesfully set key : " + key + " as value : " + value;
     }
 
     /**
      * Delete the key from the state in ledger
      *
-     * @param stub {@link ChaincodeStub} to operate proposal and ledger
-     * @param args key
+     * @param ctx
+     * @param key
      * @return Response with message and payload
      */
-    private Response delete(ChaincodeStub stub, List<String> args) {
-        if (args.size() != 1) {
-            return newErrorResponse("Incorrect number of arguments. Expecting a key");
-        }
-        String key = args.get(0);
+    @Transaction
+    public String delete(Context ctx, String key) {
+
         // Delete the key from the state in ledger
-        stub.delState(key);
-        return newSuccessResponse("Succesfully deleted key : " + args.get(0) + "from the ledger", args.get(0).getBytes(StandardCharsets.UTF_8));
-    }
-
-    public static void main(String[] args) {
-
-        new Chaincode().start(args);
+        ctx.getStub().delState(key);
+        return "Succesfully deleted key : " + key + "from the ledger";
     }
 
     /**
      * getHistory returns all transactions for an object by its key This does
      * not include read only operations (which don't use a transaction!)
      *
-     * @param stub {@link ChaincodeStub} to operate proposal and ledger
-     * @param args key
+     * @param ctx
+     * @param key
      * @return Response with message and payload
      */
-    private Response getHistory(ChaincodeStub stub, List<String> args) {
+    @Transaction
+    public String getHistory(Context ctx, String key) {
         String payload = "";
         List<Map<String, Object>> historyList = new ArrayList<>();
 
         //key value pair result iterator
-        Iterator<KeyModification> iterator = stub.getHistoryForKey(args.get(0)).iterator();
+        Iterator<KeyModification> iterator = ctx.getStub().getHistoryForKey(key).iterator();
         if (!iterator.hasNext()) {
-            return newSuccessResponse("No results", "[]".getBytes(StandardCharsets.UTF_8));
+            return "[]";
         }
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModules(new JavaTimeModule());
@@ -190,7 +167,7 @@ public class Chaincode extends ChaincodeBase {
         }
 
         Response response = newSuccessResponse("Query succesful", payload.getBytes(StandardCharsets.UTF_8));
-        return response;
+        return response.getStringPayload();
     }
 
 }
