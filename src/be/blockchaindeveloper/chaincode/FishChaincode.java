@@ -3,12 +3,14 @@ package be.blockchaindeveloper.chaincode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.hyperledger.fabric.contract.Context;
@@ -24,7 +26,7 @@ import static org.hyperledger.fabric.shim.ResponseUtils.newSuccessResponse;
 import org.hyperledger.fabric.shim.ledger.KeyModification;
 import org.hyperledger.fabric.shim.ledger.KeyValue;
 
-@Contract(name = "Chaincode",
+@Contract(name = "FishChaincode",
         info = @Info(title = "Simple CRUD Chaincode",
                 description = "Very basic Java Chaincode example",
                 version = "5",
@@ -32,12 +34,12 @@ import org.hyperledger.fabric.shim.ledger.KeyValue;
                 = @License(name = "SPDX-License-Identifier: Apache-2.0",
                         url = ""),
                 contact = @Contact(email = "dietjelle@gmail.com",
-                        name = "Chaincode",
+                        name = "FishChaincode",
                         url = "http://MyAssetContract.me")))
 @Default
-public class Chaincode implements ContractInterface {
+public class FishChaincode implements ContractInterface {
 
-    public Chaincode() {
+    public FishChaincode() {
 
     }
 
@@ -52,7 +54,12 @@ public class Chaincode implements ContractInterface {
     public Response init(Context ctx) {
 
         //Adding one fish object to the ledger on init
-        ctx.getStub().putStringState("b0d9b2ec-562c-4917-9cd3-330248e73ace", "{\"docType\":\"fish\",\"id\":\"b0d9b2ec-562c-4917-9cd3-330248e73ace\",\"price\":4,\"type\":\"Salmon\",\"weight\":2}");
+        Fish fish = new Fish();
+        fish.setId(UUID.randomUUID());
+        fish.setPrice(BigDecimal.ONE);
+        fish.setType("Salmon");
+        fish.setWeight(2);
+        ctx.getStub().putStringState(fish.getId().toString(), fish.toJSONString());
         return newSuccessResponse();
     }
 
@@ -64,14 +71,14 @@ public class Chaincode implements ContractInterface {
      * @return Response with message and payload
      */
     @Transaction
-    public String get(Context ctx, String key) {
+    public Fish get(Context ctx, String key) {
 
         String value = ctx.getStub().getStringState(key);
         if (value == null || value.isEmpty()) {
-            return "Asset not found with key: " + key;
+            return null;
         }
-        Response response = newSuccessResponse("Returned value for key : " + key + " = " + value, value.getBytes(StandardCharsets.UTF_8));
-        return response.getStringPayload();
+        Fish fish = Fish.fromJSONString(value);
+        return fish;
     }
 
     /**
@@ -79,7 +86,7 @@ public class Chaincode implements ContractInterface {
      *
      * @param ctx
      * @param query
-     * @return Response with message and payload
+     * @return Response with string payload
      */
     @Transaction
     public String query(Context ctx, String query) {
@@ -96,9 +103,7 @@ public class Chaincode implements ContractInterface {
         payload = payload.substring(0, payload.length() - 1);
         payload = "[" + payload + "]";
 
-        Response response = newSuccessResponse("Query succesful", payload.getBytes(StandardCharsets.UTF_8));
-
-        return response.getStringPayload();
+        return payload;
     }
 
     /**
@@ -163,7 +168,7 @@ public class Chaincode implements ContractInterface {
         try {
             payload = objectMapper.writeValueAsString(historyList);
         } catch (JsonProcessingException ex) {
-            Logger.getLogger(Chaincode.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FishChaincode.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         Response response = newSuccessResponse("Query succesful", payload.getBytes(StandardCharsets.UTF_8));
