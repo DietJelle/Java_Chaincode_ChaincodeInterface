@@ -110,20 +110,23 @@ public class FishChaincode implements ContractInterface {
      */
     @Transaction
     public String query(Context ctx, String query) {
-        String payload = "";
-        List<Fish> fish = new ArrayList<>();
+        List<Fish> fishList = new ArrayList<>();
+        ObjectMapper objectMapper = new ObjectMapper();
         //key value pair result iterator
         Iterator<KeyValue> iterator = ctx.getStub().getQueryResult(query).iterator();
-        if (!iterator.hasNext()) {
-            return "[]";
-        }
         while (iterator.hasNext()) {
-            payload += iterator.next().getStringValue() + ",";
+            String key = iterator.next().getKey();
+            Fish fish = get(ctx, key);
+            FishPrivateData privateData = getPrivateData(ctx, key);
+            fish.setFishPrivateData(privateData);
+            fishList.add(fish);
         }
-        payload = payload.substring(0, payload.length() - 1);
-        payload = "[" + payload + "]";
-
-        return payload;
+        try {
+            return objectMapper.writeValueAsString(fishList);
+        } catch (JsonProcessingException ex) {
+            Logger.getLogger(FishChaincode.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return "[]";
     }
 
     /**
