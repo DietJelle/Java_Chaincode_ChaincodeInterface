@@ -146,6 +146,7 @@ public class FishChaincode implements ContractInterface {
             FishPrivateData privateData = FishPrivateData.fromByteStream(ctx.getStub().getTransient().get("FishPrivateData"));
             ctx.getStub().putPrivateData("FishPrivateData", key, privateData.toJSONString());
         }
+        fish.setPrivateDataHash(String.valueOf(ctx.getStub().getPrivateDataHash("FishPrivateData", key)));
         ctx.getStub().putStringState(key, fish.toJSONString());
         return "Succesfully set key : " + key + " as value : " + value;
     }

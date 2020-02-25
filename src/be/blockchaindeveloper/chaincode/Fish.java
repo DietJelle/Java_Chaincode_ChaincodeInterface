@@ -38,6 +38,8 @@ public class Fish implements Serializable {
     private final String docType = "fish";
     @Property()
     private FishPrivateData fishPrivateData;
+    @Property()
+    private String privateDataHash;
 
     public String getDocType() {
         return docType;
@@ -81,6 +83,14 @@ public class Fish implements Serializable {
 
     public void setFishPrivateData(FishPrivateData fishPrivateData) {
         this.fishPrivateData = fishPrivateData;
+    }
+
+    public String getPrivateDataHash() {
+        return privateDataHash;
+    }
+
+    public void setPrivateDataHash(String privateDataHash) {
+        this.privateDataHash = privateDataHash;
     }
 
     public String toJSONString() {
