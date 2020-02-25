@@ -9,9 +9,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.hyperledger.fabric.contract.annotation.DataType;
@@ -23,64 +22,27 @@ import org.hyperledger.fabric.contract.annotation.Property;
  */
 @DataType()
 @JsonInclude(Include.NON_NULL)
-public class Fish implements Serializable {
+public class FishPrivateData implements Serializable {
 
-    private static final long serialVersionUID = 1L;
     @Property()
-    private UUID id;
+    private String owner;
     @Property()
-    private String type;
-    @Property()
-    private double weight;
-    @Property()
-    private BigDecimal price;
-    @Property()
-    private final String docType = "fish";
-    @Property()
-    private FishPrivateData fishPrivateData;
+    private Double mercuryContent;
 
-    public String getDocType() {
-        return docType;
+    public String getOwner() {
+        return owner;
     }
 
-    public UUID getId() {
-        return id;
+    public void setOwner(String owner) {
+        this.owner = owner;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    public Double getMercuryContent() {
+        return mercuryContent;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public double getWeight() {
-        return weight;
-    }
-
-    public void setWeight(double weight) {
-        this.weight = weight;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public FishPrivateData getFishPrivateData() {
-        return fishPrivateData;
-    }
-
-    public void setFishPrivateData(FishPrivateData fishPrivateData) {
-        this.fishPrivateData = fishPrivateData;
+    public void setMercuryContent(Double mercuryContent) {
+        this.mercuryContent = mercuryContent;
     }
 
     public String toJSONString() {
@@ -93,13 +55,26 @@ public class Fish implements Serializable {
         return null;
     }
 
-    public static Fish fromJSONString(String json) {
+    public static FishPrivateData fromJSONString(String json) {
         ObjectMapper mapper = new ObjectMapper();
-        Fish fish = null;
+        FishPrivateData fish = null;
         try {
-            fish = mapper.readValue(json, Fish.class);
+            fish = mapper.readValue(json, FishPrivateData.class);
         } catch (JsonProcessingException ex) {
             Logger.getLogger(Fish.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return fish;
+    }
+
+    public static FishPrivateData fromByteStream(byte[] bytes) {
+        ObjectMapper mapper = new ObjectMapper();
+        FishPrivateData fish = null;
+        try {
+            fish = mapper.readValue(bytes, FishPrivateData.class);
+        } catch (JsonProcessingException ex) {
+            Logger.getLogger(Fish.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(FishPrivateData.class.getName()).log(Level.SEVERE, null, ex);
         }
         return fish;
     }

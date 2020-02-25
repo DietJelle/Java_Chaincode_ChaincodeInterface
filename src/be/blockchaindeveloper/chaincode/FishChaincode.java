@@ -59,6 +59,10 @@ public class FishChaincode implements ContractInterface {
         fish.setPrice(BigDecimal.ONE);
         fish.setType("Salmon");
         fish.setWeight(2);
+        FishPrivateData privateData = new FishPrivateData();
+        privateData.setOwner("Jelle");
+        privateData.setMercuryContent(2.5);
+        ctx.getStub().putPrivateData("FishPrivateData", fish.getId().toString(), privateData.toJSONString());
         ctx.getStub().putStringState(fish.getId().toString(), fish.toJSONString());
         return newSuccessResponse();
     }
@@ -78,7 +82,23 @@ public class FishChaincode implements ContractInterface {
             return null;
         }
         Fish fish = Fish.fromJSONString(value);
+        FishPrivateData privateData = FishPrivateData.fromJSONString(ctx.getStub().getPrivateDataUTF8("FishPrivateData", fish.getId().toString()));
+        fish.setFishPrivateData(privateData);
         return fish;
+    }
+
+    /**
+     * get receives the value of a key from the ledger
+     *
+     * @param ctx
+     * @param key
+     * @return Response with message and payload
+     */
+    @Transaction
+    public FishPrivateData getPrivateData(Context ctx, String key) {
+
+        FishPrivateData privateData = FishPrivateData.fromJSONString(ctx.getStub().getPrivateDataUTF8("FishPrivateData", key));
+        return privateData;
     }
 
     /**
@@ -91,7 +111,7 @@ public class FishChaincode implements ContractInterface {
     @Transaction
     public String query(Context ctx, String query) {
         String payload = "";
-
+        List<Fish> fish = new ArrayList<>();
         //key value pair result iterator
         Iterator<KeyValue> iterator = ctx.getStub().getQueryResult(query).iterator();
         if (!iterator.hasNext()) {
@@ -118,7 +138,12 @@ public class FishChaincode implements ContractInterface {
     @Transaction
     public String set(Context ctx, String key, String value) {
 
-        ctx.getStub().putStringState(key, value);
+        Fish fish = Fish.fromJSONString(value);
+        if (ctx.getStub().getTransient() != null && ctx.getStub().getTransient().get("FishPrivateData") != null) {
+            FishPrivateData privateData = FishPrivateData.fromByteStream(ctx.getStub().getTransient().get("FishPrivateData"));
+            ctx.getStub().putPrivateData("FishPrivateData", key, privateData.toJSONString());
+        }
+        ctx.getStub().putStringState(key, fish.toJSONString());
         return "Succesfully set key : " + key + " as value : " + value;
     }
 
@@ -134,6 +159,7 @@ public class FishChaincode implements ContractInterface {
 
         // Delete the key from the state in ledger
         ctx.getStub().delState(key);
+        ctx.getStub().delPrivateData("FishPrivateData", key);
         return "Succesfully deleted key : " + key + "from the ledger";
     }
 
