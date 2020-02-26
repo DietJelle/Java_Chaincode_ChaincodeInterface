@@ -59,10 +59,6 @@ public class FishChaincode implements ContractInterface {
         fish.setPrice(BigDecimal.ONE);
         fish.setType("Salmon");
         fish.setWeight(2);
-        FishPrivateData privateData = new FishPrivateData();
-        privateData.setOwner("Jelle");
-        privateData.setMercuryContent(2.5);
-        ctx.getStub().putPrivateData("FishPrivateData", fish.getId().toString(), privateData.toJSONString());
         ctx.getStub().putStringState(fish.getId().toString(), fish.toJSONString());
         return newSuccessResponse();
     }
