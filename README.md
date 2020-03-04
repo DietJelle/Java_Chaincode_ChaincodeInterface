@@ -28,7 +28,7 @@ Chaincode is called from an sdk
 
 * Java 1.8
 * [Maven](https://maven.apache.org/) - Dependency Management
-* [Fabric-java-chaincode](https://github.com/hyperledger/fabric-chaincode-java) 1.4.1
+* [Fabric-java-chaincode](https://github.com/hyperledger/fabric-chaincode-java) 1.4.5
 
 ## Authors
 
