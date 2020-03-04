@@ -1,6 +1,7 @@
 # Fabric-java-chaincode example 
 
 Java chaincode that allows basic CRUD operations from a client
+This example uses the new annotation based ChaincodeInterface.
 
 ## Getting Started
 
